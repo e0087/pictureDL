@@ -2,150 +2,1581 @@
 <html lang="ja">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>画像URL生成</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 50px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>画像表示ページ</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      margin: 20px;
+      background-color: #f0f0f0;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-        /* フォームのスタイル調整 */
-        .form-container {
-            max-width: 400px;
-            margin: 0 auto;
-            text-align: left;
-        }
+    h1 {
+      margin-bottom: 20px;
+      color: #555;
+    }
 
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
+    .hidden-link {
+      position: absolute;
+      right: 0;
+      top: 0;
+      margin: 20px;
+      text-decoration: none;
+      color: transparent;
+    }
 
-        input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 15px;
-            box-sizing: border-box;
-        }
+    .imageContainer {
+      position: relative;
+      margin-top: 20px;
+      display: inline-block;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      background-color: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
 
-        /* 使用方法のスタイル調整 */
-        #usageBox {
-            border: 2px solid #ddd;
-            background-color: #f9f9f9;
-            padding-left: 15px;
-            padding-right: 15px;
-            padding-bottom: 15px;
-            border-radius: 10px;
-            text-align: left;
-            max-width: 670px;
-            margin: 20px auto;
-        }
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
 
-        #usageRules {
-          font-size: 1.2rem;
-        }
+    .imageNumber {
+      position: absolute;
+      top: 0;
+      left: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      padding: 5px;
+      border-bottom-right-radius: 10px;
+    }
 
-        ol {
-            margin: 0;
-            padding-left: 20px;
-        }
+    .input-group,
+    .button-group {
+      width: 100%;
+      max-width: 730px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 10px 0;
+    }
 
-        #hidden_link {
-            display: block;
-            margin-top: 20px;
-            text-align: right;
-        }
+    .input-group input,
+    .button-group input {
+      flex: 1;
+      padding: 10px;
+      margin-right: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
 
-        #urlButton {
-            width: 100%;
-            height: 40px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+    .input-group button,
+    .button-group button {
+      flex: 1;
+      max-width: 120px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      background-color: #007bff;
+      color: white;
+    }
 
-        #imageUrlContainer {
-            margin-top: 20px;
-            text-align: left;
-        }
-    </style>
+    .input-group button:hover,
+    .button-group button:hover {
+      background-color: #0056b3;
+    }
+
+    #errorContainer {
+      color: red;
+      margin-bottom: 10px;
+    }
+
+    #usageBox {
+      width: 100%;
+      max-width: 700px;
+      border: 1px solid #ddd;
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      text-align: left;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    summary {
+      font-size: 120%;
+      cursor: pointer;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 26px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #ccc;
+      border-radius: 13px;
+      transition: .4s;
+    }
+
+    .slider::before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      border-radius: 50%;
+      transition: .4s;
+    }
+
+    input:checked+.slider {
+      background-color: #007bff;
+    }
+
+    input:checked+.slider::before {
+      transform: translateX(24px);
+    }
+
+    #loader {
+      display: none;
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      width: 35px;
+      height: 35px;
+      z-index: 10001;
+    }
+
+    .progress-circle {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      background: conic-gradient(#3498db 0% calc(var(--progress) * 1%), #ddd calc(var(--progress) * 1%) 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 10px;
+      font-weight: bold;
+      color: #3498db;
+    }
+
+    .progress-circle::before {
+      content: "";
+      position: absolute;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .progress-text {
+      position: relative;
+      z-index: 2;
+      font-size: 10px;
+    }
+
+    .fixed-loder {
+      display: none;
+      position: fixed;
+      border: 8px solid #ddd;
+      border-radius: 50%;
+      border-top: 8px solid #3498db;
+      width: 35px;
+      height: 35px;
+      bottom: 10px;
+      right: 10px;
+      animation: spin-right 2s linear infinite;
+    }
+
+    @keyframes spin-right {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Viewer overlay */
+    #viewerOverlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      z-index: 9999;
+      touch-action: pan-y;
+    }
+
+    #viewerInner {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    #singleImage {
+      width: 100%;
+      height: auto;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    #spreadWrapper {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      gap: 0;
+    }
+
+    #spreadWrapper .spreadSlot {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    #spreadWrapper img {
+      height: auto;
+      width: auto;
+      object-fit: contain;
+      max-height: 100%;
+    }
+
+    #spreadLeft {
+      justify-content: flex-end;
+    }
+
+    #spreadRight {
+      justify-content: flex-start;
+    }
+
+    .viewerControls {
+      position: fixed;
+      width: 100%;
+      left: 0;
+      bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 10000;
+    }
+
+    .viewerNavButtons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    #pageSlider {
+      box-sizing: border-box;
+      width: 100vw;
+      max-width: none;
+      height: 24px;
+      margin: 0;
+      padding: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    #pageSlider::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    #pageSlider::-webkit-slider-thumb {
+      width: 16px;
+      height: 16px;
+      margin-top: -6px;
+      border: 0;
+      border-radius: 50%;
+      background: #4da3ff;
+      -webkit-appearance: none;
+    }
+
+    #pageSlider::-moz-range-track {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    #pageSlider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border: 0;
+      border-radius: 50%;
+      background: #4da3ff;
+    }
+
+    #viewerOverlay.viewer-ui-hidden .viewerControls {
+      display: none;
+    }
+
+    .viewerBtn {
+      padding: 10px 16px;
+      border: 1px solid #555;
+      background: rgba(20, 20, 20, 0.9);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .viewerBtn:hover {
+      background: rgba(40, 40, 40, 1);
+    }
+
+    .fixedBtn {
+      position: fixed;
+      top: 12px;
+      padding: 10px 16px;
+      border: 1px solid #ccc;
+      background: rgba(30, 30, 30, 0.95);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 10001;
+    }
+
+    .closeBtn {
+      right: 12px;
+    }
+
+    .menuBtn {
+      left: 12px;
+    }
+
+    .fixedBtn:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .fixedPageIndicator {
+      background: rgba(0, 0, 0, 0.9);
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+
+    /* Menu panel */
+    #menuPanel {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 260px;
+      backdrop-filter: blur(10px) brightness(80%);
+      color: #fff;
+      padding: 16px;
+      border-radius: 10px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+      display: none;
+      z-index: 11000;
+    }
+
+    #menuPanel h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+    }
+
+    .menuRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 8px 0;
+      gap: 8px;
+    }
+
+    .menuFooter {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 13px;
+    }
+
+    @media (max-width:600px) {
+      .viewerControls {
+        bottom: 12px;
+      }
+
+      #menuPanel {
+        min-width: 300px;
+      }
+
+      .spreadSlot {
+        min-height: 40vh;
+      }
+    }
+
+    #panoramaWrapper {
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      background: #000;
+    }
+
+    #panoramaWrapper img {
+      display: inline-block;
+      height: 100%;
+      width: auto;
+      /* ← 常に高さ基準（モバイルでも変えない） */
+      object-fit: contain;
+      vertical-align: middle;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* モバイル縦画面（600px以下）は横幅優先に変更 */
+    @media (max-aspect-ratio: 3/4) {
+
+      /* モバイルでは見開きのみ高さ基準に変更する */
+      #spreadWrapper img {
+        width: auto;
+        height: 100%;
+      }
+
+      /* シングルページは従来通り高さ優先 */
+      #singleImage {
+        width: auto;
+        height: 100%;
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <h1>画像表示ページ</h1>
+  <a href="https://nhentai.net/" target="_blank" class="hidden-link">Hidden Link</a>
 
-    <h1>画像URL生成</h1>
-    <a id="hidden_link" href="https://nhentai.net/" target="_blank" style="text-decoration: none; color: transparent;">Hidden Link</a>
-
-    <div id="usageBox">
-      <p id="usageRules"><strong>使用方法</strong></p>
+  <div id="usageBox">
+    <details>
+      <summary><strong>使用方法</strong></summary>
       <ol>
-          <li>対象画像サイトの1ページ目の画像を右クリックし、「画像のリンクをコピー」を押下。</li>
-          <li>「画像URL入力フォーム」にペースト。</li>
-          <li>対象画像サイトの最大ページ数を下の「指定ページ数」に入力。</li>
-          <li>「URL生成」ボタンを押下。</li>
+        <li>対象画像サイトの1ページ目の画像を右クリックし、「画像のリンクをコピー」を押下。</li>
+        <li>「画像URL入力フォーム」にペースト。</li>
+        <li>「画像表示」ボタンを押下。</li>
+        <li>「一括保存」ボタンを押下し、すべての画像が保存されます。</li>
+        <li>手元の ZIP / RAR を開く場合は、書庫ファイルを選択して「書庫を開く」を押下。</li>
       </ol>
+      <div style="margin-top:10px;"><strong>▼モード切替</strong></div>
+      <label class="switch"><input type="checkbox" id="linkToggle"><span class="slider"></span></label> リンク表示モード
+      <br />
+      <label class="switch"><input type="checkbox" id="viewerToggle"><span class="slider"></span></label>
+      コミックビュアーモード
+    </details>
   </div>
 
-    <div class="form-container">
-        <label for="textInput">画像URL入力フォーム:</label>
-        <input type="text" id="textInput" placeholder="画像URLを入力">
+  <div class="input-group">
+    <input type="search" id="textInput" placeholder="画像URLを入力">
+    <button onclick="processDisplay()">画像表示</button>
+  </div>
+  <div class="input-group">
+    <input type="search" id="zipFileNameInput" placeholder="zipファイル名(オプション)">
+    <button onclick="downloadImages()">一括保存</button>
+  </div>
+  <div class="input-group">
+    <input type="file" id="archiveFileInput" accept=".zip,.rar,application/zip,application/vnd.rar">
+    <button id="openArchiveBtn" type="button">書庫を開く</button>
+  </div>
 
-        <label for="pageInput">指定ページ数:</label>
-        <input type="number" id="pageInput" placeholder="ページ数" max="999">
+  <div id="errorContainer"></div>
+  <div id="loader">
+    <div class="progress-circle" data-progress="0"><span class="progress-text">0%</span></div>
+  </div>
+  <div class="fixed-loder" style="z-index:10000"></div>
+  <div id="imageContainer"></div>
 
-        <button id="urlButton" onclick="generateURL()">URL生成</button>
+  <!-- Viewer overlay -->
+  <div id="viewerOverlay" aria-hidden="true">
+    <div id="viewerInner">
+      <!-- Single image container -->
+      <img id="singleImage" alt="viewer" style="display:none">
+      <!-- Spread container: left/right slots -->
+      <div id="spreadWrapper" style="display:none">
+        <div class="spreadSlot" id="spreadLeft"><img id="spreadLeftImg" alt=""></div>
+        <div class="spreadSlot" id="spreadRight"><img id="spreadRightImg" alt=""></div>
+      </div>
     </div>
 
-    <!-- 修正：画像URLを表示するコンテナを追加 -->
-    <div id="imageUrlContainer"></div>
+    <div class="viewerControls">
+      <button id="menuBtn" class="fixedBtn menuBtn">≡</button>
+      <div id="pageIndicator" class="fixedBtn PageIndicator">1</div>
+      <button id="closeBtn" class="fixedBtn closeBtn">✕</button>
+      <div class="viewerNavButtons">
+        <button class="viewerBtn" id="prevBtn" type="button">◀</button>
+        <button class="viewerBtn" id="firstBtn" type="button">1ページ目</button>
+        <button class="viewerBtn" id="nextBtn" type="button">▶</button>
+      </div>
+      <input id="pageSlider" type="range" min="0" max="0" value="0" aria-label="表示ページ">
+    </div>
+  </div>
 
-    <div id="errorContainer"></div>
+  <!-- Menu panel (modal) -->
+  <div id="menuPanel" role="dialog" aria-modal="true" aria-hidden="true">
+    <h3>Viewerメニュー</h3>
+    <div class="menuRow">
+      <div>見開きモード</div>
+      <label class="switch"><input type="checkbox" id="spreadSwitch"><span class="slider"></span></label>
+    </div>
+    <div class="menuRow">
+      <div>パノラマモード</div>
+      <label class="switch"><input type="checkbox" id="panoramaSwitch"><span class="slider"></span></label>
+    </div>
+    <div class="menuRow">
+      <div>開き方向</div>
+      <div>
+        <label class="chip"><input type="radio" name="openDir" value="right" id="dirRight" checked> 右開き</label>
+        <label class="chip" style="margin-left:6px"><input type="radio" name="openDir" value="left" id="dirLeft">
+          左開き</label>
+      </div>
+    </div>
+    <div class="menuRow">
+      <div>ページずらし</div>
+      <label class="switch"><input type="checkbox" id="shiftSwitch"><span class="slider"></span></label>
+    </div>
+    <div class="menuRow" id="menuExtra"></div>
+    <div class="menuFooter">
+      <button class="viewerBtn" id="menuDownloadBtn" type="button">ダウンロード</button>
+      <button class="viewerBtn" id="menuCloseBtn">閉じる</button>
+    </div>
+  </div>
 
-    <script>
-        // 画像URLを生成する関数
-        function generateURL() {
-            // テキスト入力値の取得
-            var inputText = document.getElementById("textInput").value;
-
-            // 末尾が "1.jpg" でない場合
-            if (!inputText.endsWith("1.jpg")) {
-                document.getElementById("errorContainer").innerHTML = "画像URLを入力してください。";
-                return;
-            } else {
-                document.getElementById("errorContainer").innerHTML = "";
-            }
-
-            // 末尾の「1.jpg」を取り除く
-            var baseInputText = inputText.slice(0, -5);
-
-            // 指定ページ数の取得
-            var pageCount = parseInt(document.getElementById("pageInput").value);
-
-            // 画像URLを表示するための要素取得
-            var imageUrlContainer = document.getElementById("imageUrlContainer");
-
-            // 画像URLをクリア
-            imageUrlContainer.innerHTML = "";
-
-            // 1.jpg から指定ページ数までの画像URLを表示
-            for (var i = 1; i <= pageCount; i++) {
-                var imageUrl = baseInputText + i + ".jpg";
-
-                // 画像URLを表示する要素を作成し、コンテナに追加
-                var linkElement = document.createElement("a");
-                linkElement.href = imageUrl;
-                linkElement.target = "_blank"; // 修正：新しいウィンドウまたはタブで開くように設定
-                linkElement.innerText = "・" + i + ": " + imageUrl;
-
-                imageUrlContainer.appendChild(linkElement);
-            }
+  <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
+  <script type="module">
+    window.extractRarImages = async function (file) {
+      const moduleUrl = 'https://cdn.jsdelivr.net/npm/node-unrar-js@2.0.2/esm/index.js';
+      const wasmUrl = 'https://cdn.jsdelivr.net/npm/node-unrar-js@2.0.2/esm/js/unrar.wasm';
+      const [{ createExtractorFromData }, wasmBinary, data] = await Promise.all([
+        import(moduleUrl),
+        fetch(wasmUrl).then(response => {
+          if (!response.ok) throw new Error('RAR展開モジュールを取得できませんでした。');
+          return response.arrayBuffer();
+        }),
+        file.arrayBuffer()
+      ]);
+      const extractor = await createExtractorFromData({ data, wasmBinary });
+      const { files } = extractor.extract();
+      const entries = [];
+      for (const item of files) {
+        const name = item.fileHeader.name;
+        if (!item.fileHeader.flags.directory && item.extraction && /\.(jpe?g|png|webp|gif|bmp|avif)$/i.test(name)) {
+          entries.push({ name, data: item.extraction });
         }
-    </script>
+      }
+      return entries;
+    };
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const params = new URLSearchParams(window.location.search);
+      const prefillUrl = params.get('url');
+      if (prefillUrl) {
+        const input = document.getElementById('textInput');
+        input.value = decodeURIComponent(prefillUrl);
+      }
+      const extensions = ['.jpg', '.png', '.jpeg', '.webp'];
+      
+      // URLのパスが画像ファイルかどうかを判定する
+      function isDirectImageUrl(value) {
+        try {
+          const url = new URL(value);
+          return /\.(jpe?g|png|webp)$/i.test(url.pathname);
+        } catch {
+          return false;
+        }
+      }
+
+      // ページURLから画像URLを抽出する
+      async function extractImageUrlFromPage(pageUrl) {
+        let url;
+
+        try {
+          url = new URL(pageUrl);
+        } catch {
+          throw new Error('正しいURLを入力してください。');
+        }
+
+        if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+          throw new Error('http または https のURLを入力してください。');
+        }
+
+        let response;
+
+        try {
+          response = await fetch(url.href);
+        } catch (error) {
+          throw new Error(
+            'ページ取得時の通信エラー。CORS、拡張機能、通信制限を確認してください。' +
+            ' 詳細: ' + error.message
+          );
+        }
+        
+        if (!response.ok) {
+          throw new Error(
+            `ページ取得失敗: HTTP ${response.status}`
+          );
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            `ページの取得に失敗しました (HTTP ${response.status})`
+          );
+        }
+
+        const html = await response.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+
+        // 指定された要素の中から画像を探す
+        const container = doc.querySelector('section#image-container');
+
+        if (!container) {
+          throw new Error(
+            'section#image-container が見つかりません。'
+          );
+        }
+
+        const candidates = Array.from(
+          container.querySelectorAll('img[src], img[data-src]')
+        );
+
+        // 対応する画像形式のURLを持つ最初の画像を選ぶ
+        for (const img of candidates) {
+          const src =
+            img.getAttribute('src') ||
+            img.getAttribute('data-src');
+
+          if (!src) continue;
+
+          const imageUrl = new URL(src, url.href);
+
+          if (isDirectImageUrl(imageUrl.href)) {
+            return imageUrl.href;
+          }
+        }
+
+        throw new Error(
+          '対象要素内に jpg、jpeg、png、webp の画像が見つかりません。'
+        );
+      }
+
+      const progressCircle = document.querySelector('.progress-circle');
+      const progressText = document.querySelector('.progress-text');
+      const loader = document.getElementById('loader');
+      const fixedLoder = document.querySelector('.fixed-loder');
+
+      // --- ローカルの ZIP / RAR から画像を読み込む ---
+      const archiveFileInput = document.getElementById('archiveFileInput');
+      const openArchiveBtn = document.getElementById('openArchiveBtn');
+      let archiveObjectUrls = [];
+      let activeArchiveProgressKey = null;
+      let activeArchiveProgressName = '';
+      let activeArchivePageNames = [];
+      const archiveProgressStoragePrefix = 'pictureDL:reading-position:v3:';
+
+      function getArchiveProgressKey(fileName) {
+        const normalizedName = fileName
+          .normalize('NFKC')
+          .toLocaleLowerCase('ja-JP')
+          .replace(/\.(zip|rar)$/i, '')
+          .replace(/\d+(?=\D*$)/, '{volume}');
+        return archiveProgressStoragePrefix + normalizedName;
+      }
+
+      function readArchiveProgress(key) {
+        try {
+          const value = localStorage.getItem(key);
+          return value ? JSON.parse(value) : null;
+        } catch (error) {
+          console.warn('読書位置を読み込めませんでした:', error);
+          return null;
+        }
+      }
+
+      function isSameArchiveName(nameA, nameB) {
+        return typeof nameA === 'string' && typeof nameB === 'string'
+          && nameA.normalize('NFKC').toLocaleLowerCase('ja-JP')
+            === nameB.normalize('NFKC').toLocaleLowerCase('ja-JP');
+      }
+
+      function hasSavedMidProgress(progress) {
+        const page = Number(progress && progress.page);
+        const maxPage = Number(progress && progress.maxPage);
+        return Number.isInteger(page) && Number.isInteger(maxPage)
+          && page > 1 && page < maxPage;
+      }
+
+      function saveArchiveProgress() {
+        if (!activeArchiveProgressKey || !images.length) return;
+
+        const maxPage = images.length;
+        const currentPage = Math.max(1, Math.min(maxPage, idx + 1));
+        const lastVisibleIndex = spreadSwitch.checked && !panoramaSwitch.checked
+          ? Math.min(maxPage - 1, getSpreadPairStart(idx) + 1)
+          : idx;
+
+        try {
+          // 先頭または最後の見開きまで読んだ状態は保存せず、既存記録も削除する
+          if (currentPage === 1 || lastVisibleIndex >= maxPage - 1) {
+            localStorage.removeItem(activeArchiveProgressKey);
+            return;
+          }
+
+          localStorage.setItem(activeArchiveProgressKey, JSON.stringify({
+            archiveName: activeArchiveProgressName,
+            page: currentPage,
+            maxPage: maxPage,
+            pageName: activeArchivePageNames[idx] || '',
+            updatedAt: Date.now()
+          }));
+        } catch (error) {
+          console.warn('読書位置を保存できませんでした:', error);
+        }
+      }
+
+      function releaseArchiveObjectUrls() {
+        archiveObjectUrls.forEach(url => URL.revokeObjectURL(url));
+        archiveObjectUrls = [];
+      }
+      const archiveImageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.avif'];
+      const archiveFileCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+      function isArchiveImage(path) {
+        return archiveImageExtensions.some(ext => path.toLowerCase().endsWith(ext));
+      }
+
+      function imageMimeType(path) {
+        const ext = path.toLowerCase().slice(path.lastIndexOf('.'));
+        return ({ '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.bmp': 'image/bmp', '.avif': 'image/avif' })[ext] || 'application/octet-stream';
+      }
+
+      function renderArchiveImages(entries, archiveName) {
+        if (!entries.length) throw new Error('書庫内に画像ファイルが見つかりませんでした。');
+        entries.sort((a, b) => archiveFileCollator.compare(a.name, b.name));
+
+        activeArchiveProgressKey = getArchiveProgressKey(archiveName);
+        activeArchiveProgressName = archiveName;
+        activeArchivePageNames = entries.map(entry => entry.name);
+        const savedProgress = readArchiveProgress(activeArchiveProgressKey);
+        const isSameArchiveFile = savedProgress
+          && isSameArchiveName(savedProgress.archiveName, archiveName);
+        const savedPageNameIndex = isSameArchiveFile && savedProgress.pageName
+          ? activeArchivePageNames.indexOf(savedProgress.pageName)
+          : -1;
+        const savedPageIndex = isSameArchiveFile
+          ? (savedPageNameIndex >= 0
+            ? savedPageNameIndex
+            : Number(savedProgress.page) - 1)
+          : 0;
+        idx = Number.isFinite(savedPageIndex)
+          ? Math.max(0, Math.min(entries.length - 1, savedPageIndex))
+          : 0;
+
+        releaseArchiveObjectUrls();
+        const fragment = document.createDocumentFragment();
+        entries.forEach((entry, index) => {
+          const url = URL.createObjectURL(new Blob([entry.data], { type: imageMimeType(entry.name) }));
+          archiveObjectUrls.push(url);
+          const wrap = document.createElement('div');
+          wrap.className = 'imageContainer';
+          const img = document.createElement('img');
+          img.src = url;
+          img.alt = entry.name;
+          img.loading = 'lazy';
+          const number = document.createElement('div');
+          number.className = 'imageNumber';
+          number.textContent = String(index + 1);
+          wrap.appendChild(img);
+          wrap.appendChild(number);
+          fragment.appendChild(wrap);
+        });
+
+        document.getElementById('imageContainer').replaceChildren(fragment);
+        document.getElementById('errorContainer').textContent = `${archiveName} から画像を ${entries.length} 枚読み込みました。`;
+        updateImagesFromContainer();
+      }
+
+      async function openZipArchive(file) {
+        const zip = await JSZip.loadAsync(file);
+        const imageFiles = Object.values(zip.files)
+          .filter(entry => !entry.dir && isArchiveImage(entry.name))
+          .sort((a, b) => archiveFileCollator.compare(a.name, b.name));
+        const entries = await Promise.all(imageFiles.map(async entry => ({
+          name: entry.name,
+          data: await entry.async('uint8array')
+        })));
+        renderArchiveImages(entries, file.name);
+      }
+
+      async function openRarArchive(file) {
+        if (!window.extractRarImages) throw new Error('RAR読み込みライブラリを読み込めませんでした。ネットワーク接続を確認してください。');
+        const entries = await window.extractRarImages(file);
+        renderArchiveImages(entries, file.name);
+      }
+
+      openArchiveBtn.addEventListener('click', async function () {
+        const file = archiveFileInput.files && archiveFileInput.files[0];
+        if (!file) {
+          document.getElementById('errorContainer').textContent = 'ZIP または RAR ファイルを選択してください。';
+          return;
+        }
+
+        const isSupportedArchive = /\.(zip|rar)$/i.test(file.name);
+        if (isSupportedArchive) {
+          const savedProgress = readArchiveProgress(getArchiveProgressKey(file.name));
+          const isDifferentVolume = savedProgress
+            && !isSameArchiveName(savedProgress.archiveName, file.name);
+          if (isDifferentVolume && hasSavedMidProgress(savedProgress)) {
+            const message = `${savedProgress.archiveName} を ${savedProgress.page}/${savedProgress.maxPage} ページまで読んだ記録があります。\n別巻「${file.name}」を開きますか？`;
+            if (!window.confirm(message)) return;
+          }
+        }
+
+        openArchiveBtn.disabled = true;
+        document.getElementById('errorContainer').textContent = '書庫を展開しています...';
+        try {
+          if (/\.zip$/i.test(file.name)) await openZipArchive(file);
+          else if (/\.rar$/i.test(file.name)) await openRarArchive(file);
+          else throw new Error('対応している形式は ZIP と RAR です。');
+        } catch (error) {
+          console.error('書庫の読み込みエラー:', error);
+          document.getElementById('errorContainer').textContent = '書庫を開けませんでした: ' + (error.message || 'ファイル形式または内容を確認してください。');
+        } finally {
+          openArchiveBtn.disabled = false;
+        }
+      });
+      // viewer elements
+      const viewerToggle = document.getElementById('viewerToggle');
+      const viewerOverlay = document.getElementById('viewerOverlay');
+      const singleImage = document.getElementById('singleImage');
+      const spreadWrapper = document.getElementById('spreadWrapper');
+      const spreadLeftImg = document.getElementById('spreadLeftImg');
+      const spreadRightImg = document.getElementById('spreadRightImg');
+      const spreadSwitch = document.getElementById('spreadSwitch');
+      const dirRight = document.getElementById('dirRight');
+      const dirLeft = document.getElementById('dirLeft');
+      const menuBtn = document.getElementById('menuBtn');
+      const menuPanel = document.getElementById('menuPanel');
+      const menuCloseBtn = document.getElementById('menuCloseBtn');
+      const menuDownloadBtn = document.getElementById('menuDownloadBtn');
+      const firstBtn = document.getElementById('firstBtn');
+      const pageSlider = document.getElementById('pageSlider');
+      const shiftSwitch = document.getElementById('shiftSwitch');
+      const panoramaSwitch = document.getElementById('panoramaSwitch');
+      const panoramaWrapper = document.createElement('div');
+      panoramaWrapper.id = 'panoramaWrapper';
+      document.getElementById('viewerInner').appendChild(panoramaWrapper);
+      let isProgrammaticScroll = false;
+      let panoramaScrollTimeout = null;
+      let panoramaProgrammaticUnlockTimer = null;
+      panoramaWrapper.addEventListener('scroll', function () {
+        if (!panoramaSwitch.checked) return;
+        if (isProgrammaticScroll) {
+          if (panoramaProgrammaticUnlockTimer) clearTimeout(panoramaProgrammaticUnlockTimer);
+          panoramaProgrammaticUnlockTimer = setTimeout(function () {
+            isProgrammaticScroll = false;
+            panoramaProgrammaticUnlockTimer = null;
+          }, 160);
+          return;
+        }
+        if (panoramaScrollTimeout) clearTimeout(panoramaScrollTimeout);
+        panoramaScrollTimeout = setTimeout(function () {
+          if (isProgrammaticScroll) return;
+          const imgs = Array.from(panoramaWrapper.querySelectorAll('img'));
+          if (!imgs.length) return;
+          const wrapperRect = panoramaWrapper.getBoundingClientRect();
+          const wrapperCenterX = wrapperRect.left + wrapperRect.width / 2;
+          let closestIndex = 0;
+          let closestDist = Infinity;
+          imgs.forEach(img => {
+            const rect = img.getBoundingClientRect();
+            const imgCenter = rect.left + rect.width / 2;
+            const dist = Math.abs(imgCenter - wrapperCenterX);
+            const index = parseInt(img.dataset.index, 10);
+            if (dist < closestDist) {
+              closestDist = dist;
+              closestIndex = index;
+            }
+          });
+          if (idx !== closestIndex) {
+            idx = closestIndex;
+            updatePageIndicator();
+          }
+        }, 80);
+      }, { passive: true });
+
+      // --- ビューア全体の三分割タップ制御 ---
+      viewerOverlay.addEventListener('click', function (e) {
+        // 操作ボタン上のタップはページ操作に使わない
+        if (e.target.closest('.viewerControls')) return;
+
+        const rect = viewerOverlay.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const third = rect.width / 3;
+
+        // 中央領域をタップするとビューアの操作UIを切り替える
+        if (x >= third && x <= third * 2) {
+          if (viewerOverlay.classList.contains('viewer-ui-hidden')) {
+            viewerOverlay.classList.remove('viewer-ui-hidden');
+          } else {
+            closeMenu();
+            viewerOverlay.classList.add('viewer-ui-hidden');
+          }
+          return;
+        }
+
+        // 左右どちらをタップしたかで動作を決定
+        if (dirRight.checked) {
+          // 右開き → 左領域で進む、右領域で戻る
+          if (x < third) next();
+          else prev();
+        } else {
+          // 左開き → 右領域で進む、左領域で戻る
+          if (x > third * 2) next();
+          else prev();
+        }
+      });
+
+      let images = []; // list of image URLs
+      let idx = 0;
+      let pageSliderInteracting = false;
+
+      function setProgress(v) {
+        progressCircle.style.setProperty('--progress', v);
+        progressText.textContent = v + '%';
+      }
+
+      
+      window.processDisplay = async function () {
+        const isLinkMode = document.getElementById('linkToggle').checked;
+        const input = document.getElementById('textInput');
+        const errorContainer = document.getElementById('errorContainer');
+      
+        loader.style.display = 'none';
+        fixedLoder.style.display = 'block';
+        progressText.style.display = 'none';
+        setProgress(0);
+      
+        activeArchiveProgressKey = null;
+        activeArchiveProgressName = '';
+        activeArchivePageNames = [];
+        releaseArchiveObjectUrls();
+        document.getElementById('imageContainer').innerHTML = '';
+        errorContainer.innerText = '';
+      
+        try {
+          const url = input.value.trim();
+      
+          if (!url) {
+            throw new Error('URLを入力してください。');
+          }
+      
+          // 画像URLなら従来の処理を使用
+          // ページURLならHTMLから画像URLを抽出する
+          if (!isDirectImageUrl(url)) {
+            errorContainer.innerText = 'ページから画像URLを取得中...';
+      
+            const imageUrl = await extractImageUrlFromPage(url);
+      
+            // 抽出した画像URLを既存処理に渡す
+            input.value = imageUrl;
+            errorContainer.innerText = '';
+          }
+      
+          if (isLinkMode) {
+            generateLinks();
+          } else {
+            displayImages();
+          }
+        } catch (error) {
+          console.error('画像URL取得エラー:', error);
+      
+          errorContainer.innerText =
+            'エラー: ' + (error.message || '画像URLを取得できませんでした。');
+      
+          loader.style.display = 'none';
+          fixedLoder.style.display = 'none';
+        }
+      };
+
+      function generateLinks() {
+        const input = document.getElementById('textInput').value.trim();
+        const isValid = extensions.some(ext => input.toLowerCase().endsWith(ext));
+        if (!isValid) {
+          document.getElementById('errorContainer').innerText = '画像URLを入力してください。';
+          loader.style.display = 'none';
+          fixedLoder.style.display = 'none';
+          return;
+        }
+        const base = input.slice(0, input.lastIndexOf('.') - 1);
+        let i = 1,
+          failCount = 0;
+        const maxFails = extensions.length;
+        const container = document.getElementById('imageContainer');
+
+        (function next() {
+          if (failCount >= maxFails) {
+            fixedLoder.style.display = 'none';
+            updateImagesFromContainer();
+            return;
+          }
+
+          let tried = 0;
+
+          function tryNextExt() {
+            if (tried >= extensions.length) {
+              failCount++;
+              i++;
+              next();
+              return;
+            }
+
+            const ext = extensions[tried];
+            const url = base + i + ext;
+            const img = new Image();
+
+            img.onload = function () {
+              const div = document.createElement('div');
+              div.className = 'linkContainer';
+              const a = document.createElement('a');
+              a.href = url;
+              a.target = '_blank';
+              a.textContent = url;
+              div.appendChild(a);
+              container.appendChild(div);
+
+              failCount = 0;
+              i++;
+              next();
+            };
+
+            img.onerror = function () {
+              tried++;
+              tryNextExt();
+            };
+
+            img.src = url;
+          }
+
+          tryNextExt();
+        })();
+      }
+
+      function displayImages() {
+        const input = document.getElementById('textInput').value.trim();
+        const isValid = extensions.some(ext => input.toLowerCase().endsWith(ext));
+        if (!isValid) {
+          document.getElementById('errorContainer').innerText = '画像URLを入力してください。';
+          loader.style.display = 'none';
+          fixedLoder.style.display = 'none';
+          return;
+        }
+        const base = input.slice(0, input.lastIndexOf('.') - 1);
+        let i = 1, failCount = 0;
+
+        const maxFails = extensions.length;
+        const container = document.getElementById('imageContainer');
+
+        (function next() {
+          if (failCount >= maxFails) {
+            fixedLoder.style.display = 'none';
+            updateImagesFromContainer();
+            return;
+          }
+
+          let tried = 0;
+
+          function tryNextExt() {
+            if (tried >= extensions.length) {
+              failCount++;
+              i++;
+              next();
+              return;
+            }
+
+            const ext = extensions[tried];
+            const url = base + i + ext;
+            const img = new Image();
+
+            img.onload = function () {
+              const wrap = document.createElement('div');
+              wrap.className = 'imageContainer';
+              const imgEl = document.createElement('img');
+              imgEl.src = url;
+              imgEl.alt = 'image ' + i;
+              imgEl.loading = 'lazy';
+              const num = document.createElement('div');
+              num.className = 'imageNumber';
+              num.textContent = i;
+              wrap.appendChild(imgEl);
+              wrap.appendChild(num);
+              container.appendChild(wrap);
+
+              failCount = 0;
+              i++;
+              next();
+            };
+
+            img.onerror = function () {
+              tried++;
+              tryNextExt();
+            };
+
+            img.src = url;
+          }
+
+          tryNextExt();
+        })();
+      }
+
+      function ensurePanoramaDOM() {
+        // 既に同じ数の img があれば src を単に更新して終わり（使い回し）
+        const existing = Array.from(panoramaWrapper.querySelectorAll('img'));
+        if (existing.length === images.length) {
+          existing.forEach((el, i) => {
+            if (images[i] && el.src !== images[i]) el.src = images[i];
+            else if (!images[i]) el.removeAttribute('src');
+          });
+          return;
+        }
+
+        // 数が変わっている／初回：一度だけ再構築
+        panoramaWrapper.innerHTML = '';
+        images.forEach((src, i) => {
+          const img = document.createElement('img');
+          img.dataset.index = i;
+          if (src) img.src = src;
+          img.alt = 'p' + (i + 1);
+          panoramaWrapper.appendChild(img);
+        });
+      }
+
+      async function downloadImages() {
+        loader.style.display = 'block';
+        fixedLoder.style.display = 'none';
+        progressText.style.display = 'block';
+
+        const imgs = document.getElementById('imageContainer').getElementsByTagName('img');
+        const zip = new JSZip();
+        const name = document.getElementById('zipFileNameInput').value.trim() || 'images';
+
+        for (let k = 0; k < imgs.length; k++) {
+          const url = imgs[k].src;
+          const res = await fetch(url, { mode: 'cors' });
+          const blob = await res.blob();
+          zip.file((k + 1) + '.jpg', blob);
+          setProgress(Math.round(((k + 1) / imgs.length) * 100));
+        }
+
+        zip.generateAsync({ type: 'blob' })
+          .then(function (content) {
+            saveAs(content, name + '.zip'); loader.style.display = 'none';
+
+            document.getElementById('textInput').value = '';
+            document.getElementById('zipFileNameInput').value = '';
+          })
+          .catch(function (e) { console.error(e); loader.style.display = 'none'; });
+      }
+
+      window.displayImages = displayImages;
+      window.downloadImages = downloadImages;
+
+      function getSpreadPairStart(pageIndex) {
+        if (shiftSwitch.checked) return Math.floor(pageIndex / 2) * 2;
+        if (pageIndex === 0) return 0; // 表紙は単独表示
+        return Math.floor((pageIndex - 1) / 2) * 2 + 1;
+      }
+
+      function updatePageIndicator(saveProgress = true) {
+        const indicator = document.getElementById('pageIndicator');
+        if (!indicator) return;
+
+        const spreadOn = spreadSwitch.checked;
+        const panoOn = panoramaSwitch.checked;
+        let text = '';
+
+        if (panoOn) {
+          text = (idx + 1).toString();
+        } else if (spreadOn) {
+          if (!shiftSwitch.checked && idx === 0) {
+            text = '1';
+          } else {
+            const pairStart = getSpreadPairStart(idx);
+            const p1 = pairStart + 1;
+            const p2 = pairStart + 2;
+            if (p1 > images.length) {
+              text = "";
+            } else if (p2 > images.length) {
+              text = p1.toString();
+            } else {
+              text = `${p1} - ${p2}`;
+            }
+          }
+        } else {
+          text = (idx + 1).toString();
+        }
+        document.getElementById('pageIndicator').textContent = text;
+        pageSlider.max = String(Math.max(0, images.length - 1));
+        if (!pageSliderInteracting) {
+          pageSlider.value = String(images.length ? Math.max(0, Math.min(images.length - 1, idx)) : 0);
+        }
+        pageSlider.style.direction = dirRight.checked ? 'rtl' : 'ltr';
+        if (saveProgress) saveArchiveProgress();
+      }
+
+      // Viewer behaviours
+      function openViewer() { if (!images.length) return; viewerOverlay.classList.remove('viewer-ui-hidden'); viewerOverlay.style.display = 'flex'; viewerOverlay.setAttribute('aria-hidden', 'false'); renderViewer(); }
+      function closeViewer() { viewerOverlay.classList.remove('viewer-ui-hidden'); viewerOverlay.style.display = 'none'; viewerOverlay.setAttribute('aria-hidden', 'true'); try { viewerToggle.checked = false; } catch (e) { }; closeMenu(); }
+      function renderViewer(saveProgress = true) {
+        const spreadOn = spreadSwitch.checked;
+        const panoOn = panoramaSwitch.checked;
+
+        if (panoOn) {
+          singleImage.style.display = 'none';
+          spreadWrapper.style.display = 'none';
+
+          // まずパノラマDOMを確実に作る（初回のみ）
+          ensurePanoramaDOM();
+
+          // 表示切替
+          panoramaWrapper.style.display = 'flex';
+
+          // 現在のインデックスを保持したまま開き方向を切り替える
+          // （dirRight が true のとき row-reverse、false のとき row としている色々なロジックに合わせてください）
+          const newDir = dirRight.checked ? 'row-reverse' : 'row';
+          // 変更が実際に起きるときだけ処理（無駄な再flowを避ける）
+          if (panoramaWrapper.style.flexDirection !== newDir) {
+            const currentIdx = Math.max(0, Math.min(images.length - 1, idx));
+            panoramaWrapper.style.flexDirection = newDir;
+            setTimeout(() => scrollToPanoramaIndex(currentIdx, 'auto'), 20);
+          } else {
+            // flexDirection が変わらない場合は何もしない（DOM再構築もしない）
+            // ただし初回表示などで idx を画面に合わせたい場合は必要に応じてスクロールする
+            const target = panoramaWrapper.querySelector(`img[data-index="${idx}"]`);
+            if (target) {
+              // （初回表示で画面に合わせたいならコメント解除）
+              // target.scrollIntoView({ behavior: "auto", inline: "center" });
+            }
+          }
+
+        } else if (spreadOn) {
+          panoramaWrapper.style.display = 'none';
+          singleImage.style.display = 'none';
+          spreadWrapper.style.display = 'flex';
+
+          const dir = dirRight.checked ? 'right' : 'left';
+
+          let leftIndex = -1, rightIndex = -1;
+          if (!shiftSwitch.checked && idx === 0) {
+            // 表紙は開き方向に応じた外側のページ位置へ単独で置く
+            if (dir === 'left') leftIndex = 0;
+            else rightIndex = 0;
+          } else {
+            const pairStart = getSpreadPairStart(idx);
+            if (dir === 'left') {
+              leftIndex = pairStart;
+              rightIndex = pairStart + 1;
+            } else {
+              leftIndex = pairStart + 1;
+              rightIndex = pairStart;
+            }
+          }
+
+          spreadLeftImg.src = images[leftIndex] || '';
+          spreadRightImg.src = images[rightIndex] || '';
+          spreadLeftImg.style.visibility = leftIndex >= 0 && images[leftIndex] ? 'visible' : 'hidden';
+          spreadRightImg.style.visibility = rightIndex >= 0 && images[rightIndex] ? 'visible' : 'hidden';
+
+        } else {
+          panoramaWrapper.style.display = 'none';
+          spreadWrapper.style.display = 'none';
+          singleImage.style.display = 'block';
+          singleImage.src = images[idx] || '';
+        }
+
+        // ページインジケーター更新
+        updatePageIndicator(saveProgress);
+      }
+
+      function next() {
+        const spreadOn = spreadSwitch.checked;
+        const panoOn = panoramaSwitch.checked;
+
+        if (panoOn) {
+          if (idx < images.length - 1) {
+            idx++;
+            scrollToPanoramaIndex(idx, 'smooth');
+          }
+          updatePageIndicator();
+        } else if (spreadOn) {
+          const nextIndex = !shiftSwitch.checked && idx === 0 ? 1 : idx + 2;
+          if (nextIndex < images.length) idx = nextIndex;
+          renderViewer();
+        } else {
+          if (idx < images.length - 1) {
+            idx++;
+            renderViewer();
+          }
+        }
+      }
+
+      function prev() {
+        const spreadOn = spreadSwitch.checked;
+        const panoOn = panoramaSwitch.checked;
+
+        if (panoOn) {
+          if (idx > 0) {
+            idx--;
+            scrollToPanoramaIndex(idx, 'smooth');
+          }
+          updatePageIndicator();
+        } else if (spreadOn) {
+          if (shiftSwitch.checked) idx = Math.max(0, idx - 2);
+          else if (idx === 1) idx = 0;
+          else if (idx > 1) idx -= 2;
+          renderViewer();
+        } else {
+          if (idx > 0) {
+            idx--;
+            renderViewer();
+          }
+        }
+      }
+
+      document.getElementById('nextBtn').addEventListener('click', function (e) { e.stopPropagation(); next(); });
+      document.getElementById('prevBtn').addEventListener('click', function (e) { e.stopPropagation(); prev(); });
+      document.getElementById('closeBtn').addEventListener('click', function (e) { e.stopPropagation(); closeViewer(); });
+      document.getElementById('firstBtn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (panoramaSwitch.checked) {
+          // パノラマならスクロールで先頭に飛ばしてインジケータを更新
+          idx = 0;
+          scrollToPanoramaIndex(0, 'smooth');
+          updatePageIndicator();
+        } else {
+          // 単ページ／見開きは既存のレンダーで対応
+          idx = 0;
+          renderViewer();
+        }
+      });
+
+
+      pageSlider.addEventListener('input', function () {
+        if (!images.length) return;
+        pageSliderInteracting = true;
+        const selectedIndex = Math.max(0, Math.min(images.length - 1, Number(pageSlider.value) || 0));
+        if (panoramaSwitch.checked) {
+          idx = selectedIndex;
+          updatePageIndicator(false);
+          // スライダーの動きに合わせてページを即時移動する
+          scrollToPanoramaIndex(idx, 'auto');
+        } else {
+          idx = spreadSwitch.checked ? getSpreadPairStart(selectedIndex) : selectedIndex;
+          renderViewer(false);
+        }
+      });
+      pageSlider.addEventListener('change', function () {
+        pageSliderInteracting = false;
+        pageSlider.value = String(images.length ? Math.max(0, Math.min(images.length - 1, idx)) : 0);
+        saveArchiveProgress();
+      });
+      // keyboard
+      document.addEventListener('keydown', function (e) {
+        if (viewerOverlay.getAttribute('aria-hidden') === 'true') return;
+        if (e.key === 'ArrowRight') next();
+        else if (e.key === 'ArrowLeft') prev();
+        else if (e.key === 'Escape') closeViewer();
+      });
+
+      // touch swipe
+      let touchStartX = null;
+      viewerOverlay.addEventListener('touchstart', function (e) {
+        // タッチ開始の X を記録（パノラマ時も記録しておく）
+        touchStartX = e.changedTouches[0].clientX;
+      }, { passive: true });
+
+      viewerOverlay.addEventListener('touchend', function (e) {
+        if (touchStartX == null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+
+        // ★ パノラマモードなら「スワイプでの prev/next を行わない」
+        //    （パノラマは自由スクロールが優先）
+        if (panoramaSwitch.checked) {
+          touchStartX = null;
+          // ※ スクロールで idx は scroll イベントで更新されるのでここでは何もしない
+          return;
+        }
+
+        // パノラマでなければ（通常の単ページ／見開き）スワイプでページ操作
+        if (Math.abs(dx) > 40) {
+          if (dirRight.checked) {
+            // 右開き: スワイプ左で prev、右で next （既存の仕様を維持）
+            if (dx < 0) prev();
+            else next();
+          } else {
+            // 左開き
+            if (dx < 0) next();
+            else prev();
+          }
+        }
+
+        touchStartX = null;
+      }, { passive: true });
+
+      viewerOverlay.addEventListener('touchend', function (e) {
+        if (touchStartX == null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+
+        if (Math.abs(dx) > 40) {
+          if (dirRight.checked) {
+            // 右開き
+            if (dx < 0) prev();
+            else next();
+          } else {
+            // 左開き
+            if (dx < 0) next();
+            else prev();
+          }
+        }
+
+        touchStartX = null;
+      }, { passive: true });
+
+      // viewer toggle
+      viewerToggle.addEventListener('change', function () {
+        if (viewerToggle.checked) { if (images.length) openViewer(); else { } }
+        else { closeViewer(); }
+      });
+
+      // observe changes to imageContainer
+      const observer = new MutationObserver(function () { updateImagesFromContainer(); });
+      observer.observe(document.getElementById('imageContainer'), { childList: true, subtree: true });
+
+      // Menu panel
+      menuBtn.addEventListener('click', function (e) { e.stopPropagation(); openMenu(); });
+      function openMenu() { menuPanel.style.display = 'block'; menuPanel.setAttribute('aria-hidden', 'false'); }
+      function closeMenu() { menuPanel.style.display = 'none'; menuPanel.setAttribute('aria-hidden', 'true'); }
+      menuCloseBtn.addEventListener('click', function (e) { e.stopPropagation(); closeMenu(); });
+
+      // menu download action -> same as one-click download (close menu first)
+      menuDownloadBtn.addEventListener('click', function (e) { e.stopPropagation(); closeMenu(); setTimeout(function () { downloadImages(); }, 50); });
+
+      // clicking outside menu closes it
+      document.addEventListener('click', function (e) {
+        if (menuPanel.style.display === 'block') {
+          const rect = menuPanel.getBoundingClientRect();
+          if (!(e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom)) {
+            closeMenu();
+          }
+        }
+      });
+      menuPanel.addEventListener('click', function (e) { e.stopPropagation(); });
+
+      // re-render when spread/direction change
+      spreadSwitch.addEventListener('change', function () {
+        if (spreadSwitch.checked) idx = getSpreadPairStart(idx);
+        panoramaSwitch.checked = false;
+        renderViewer();
+      });
+      shiftSwitch.addEventListener('change', function () {
+        if (spreadSwitch.checked) idx = getSpreadPairStart(idx);
+        renderViewer();
+      });
+      panoramaSwitch.addEventListener('change', function () {
+        if (panoramaSwitch.checked) {
+          spreadSwitch.checked = false;
+        }
+        renderViewer();
+      });
+      dirRight.addEventListener('change', function () { renderViewer(); });
+      dirLeft.addEventListener('change', function () { renderViewer(); });
+
+      // utility
+      function scrollToPanoramaIndex(pageIndex, behavior) {
+        const target = panoramaWrapper.querySelector(`img[data-index="${pageIndex}"]`);
+        if (!target) return;
+        if (panoramaScrollTimeout) {
+          clearTimeout(panoramaScrollTimeout);
+          panoramaScrollTimeout = null;
+        }
+        if (panoramaProgrammaticUnlockTimer) clearTimeout(panoramaProgrammaticUnlockTimer);
+        isProgrammaticScroll = true;
+        target.scrollIntoView({ behavior: behavior, inline: 'center' });
+        panoramaProgrammaticUnlockTimer = setTimeout(function () {
+          isProgrammaticScroll = false;
+          panoramaProgrammaticUnlockTimer = null;
+        }, behavior === 'smooth' ? 500 : 180);
+      }
+      function updateImagesFromContainer() {
+        const imgs = Array.from(document.querySelectorAll('#imageContainer img'));
+        images = imgs.map(i => i.src);
+        if (idx >= images.length) idx = Math.max(0, images.length - 1);
+        ensurePanoramaDOM();
+
+        if (viewerToggle.checked && images.length) {
+          if (viewerOverlay.getAttribute('aria-hidden') === 'true') openViewer();
+          else renderViewer();
+        }
+      }
+      window.updateImagesFromContainer = updateImagesFromContainer;
+
+    });
+  </script>
 
 </body>
 
